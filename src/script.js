@@ -2,8 +2,7 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
-import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
+import gsap from 'gsap'
 /**
  * Base
  */
@@ -16,9 +15,30 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
+// object
+const geometry = new THREE.SphereGeometry(0.3, 30, 20);
+const geometry2 = new THREE.SphereGeometry(0.3, 30, 20);
+const geometry3 = new THREE.SphereGeometry(0.3, 30, 20);
+const material = new THREE.MeshBasicMaterial({ color: 0xffffff })
+material.wireframe = true
+const sphere = new THREE.Mesh(geometry, material);
+const sphere1 = new THREE.Mesh(geometry2, material);
+const sphere2 = new THREE.Mesh(geometry3, material);
+sphere1.position.x = -0.9;
+sphere2.position.x = 0.9;
+scene.add(sphere, sphere1, sphere2)
 
+// light
+const Ambientlight = new THREE.AmbientLight(0x404040, 0.5); // soft white light
 
-
+scene.add(Ambientlight);
+// const light = new THREE.DirectionalLight(0xFFFFFF, 0.5);
+// const helper = new THREE.DirectionalLightHelper(light, 1);
+// scene.add(helper)
+// gui.add(geometry, 'wireframe')
+// // .min(- 3)
+// //     .max(3)
+// //     .step(0.01)
 /**
  * Sizes
  */
@@ -74,7 +94,9 @@ const tick = () => {
 
     // Update controls
     controls.update()
-
+    sphere.position.y = Math.sin(elapsedTime)
+    sphere1.position.y = Math.sin(elapsedTime) / 2
+    sphere2.position.y = Math.sin(elapsedTime) / 2
     // Render
     renderer.render(scene, camera)
 
