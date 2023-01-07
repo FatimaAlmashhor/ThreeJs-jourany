@@ -27,6 +27,8 @@ const plan = new THREE.Mesh(
     new THREE.PlaneGeometry(5, 5),
     material
 )
+
+const spheres = [];
 for (let i = 0; i < 6; i++) {
     let sphere = new THREE.Mesh(
         new THREE.SphereGeometry(0.4, 10, 10),
@@ -35,7 +37,9 @@ for (let i = 0; i < 6; i++) {
     let angle = (i * 60) * (Math.PI / 180)
     sphere.position.x = -0.9 * Math.cos(angle) * 2;
     sphere.position.z = -0.9 * Math.sin(angle) * 2;
+    spheres.push(sphere)
     scene.add(sphere)
+
 }
 
 const cube = new THREE.Mesh(
@@ -45,9 +49,9 @@ const cube = new THREE.Mesh(
 cube.position.x = 0.9;
 plan.rotation.x = - Math.PI * .5
 // plan.rotation.y = - 0.50;
-plan.position.y = -0.5;
+plan.position.y = -1.3;
 
-scene.add(plan, cube)
+scene.add(plan)
 
 
 // light
@@ -139,16 +143,21 @@ const clock = new THREE.Clock()
 
 const tick = () => {
     const elapsedTime = clock.getElapsedTime();
-    const speed = elapsedTime * 2;
-    let angle = 30;
+
 
     // for(i = 0 ; i< 6 ; i++){}
-    angle = (angle) * (Math.PI / 180) * speed;
-    const rotateY = Math.sin(angle) * 2;
-    const rotateX = Math.cos(angle) * 2;
 
-    // sphere.position.x = rotateX;
-    // sphere.position.z = rotateY;
+
+    spheres.forEach((sphere, i) => {
+        const speed = elapsedTime * 2;
+        let angle = 30;
+        angle = (angle) * (Math.PI / 180) * (speed + (i * 2));
+        const rotateY = Math.sin(angle) * 2;
+        const rotateX = Math.cos(angle) * 2;
+        sphere.position.x = rotateX;
+        sphere.position.z = rotateY;
+        sphere.position.y = Math.sin(speed + (i * 2))
+    })
     // Update controls
     controls.update()
 
