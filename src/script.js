@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
 import gsap from 'gsap'
+import { Sphere } from 'three'
 /**
  * Base
  */
@@ -15,27 +16,67 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
+// ganeral material
+const material = new THREE.MeshStandardMaterial()
+material.roughness = 0.4
+// const material = new THREE.MeshNormalMaterial();
+// const material = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
+// material.wireframe = true;
 // object
-const geometry = new THREE.SphereGeometry(0.3, 30, 20);
-const geometry2 = new THREE.SphereGeometry(0.3, 30, 20);
-const geometry3 = new THREE.SphereGeometry(0.3, 30, 20);
-const material = new THREE.MeshBasicMaterial({ color: 0xffffff })
-material.wireframe = true
-const sphere = new THREE.Mesh(geometry, material);
-const sphere1 = new THREE.Mesh(geometry2, material);
-const sphere2 = new THREE.Mesh(geometry3, material);
-sphere1.position.x = -0.9;
-sphere2.position.x = 0.9;
-scene.add(sphere, sphere1, sphere2)
+const plan = new THREE.Mesh(
+    new THREE.PlaneGeometry(5, 5),
+    material
+)
+const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(0.4, 10, 10),
+    material
+)
+sphere.position.x = -0.9;
+const cube = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1, 1),
+    material
+)
+cube.position.x = 0.9;
+plan.rotation.x = - Math.PI * .5
+// plan.rotation.y = - 0.50;
+plan.position.y = -0.5;
+
+scene.add(plan, sphere, cube)
+
 
 // light
-const Ambientlight = new THREE.AmbientLight(0x404040, 0.5); // soft white light
+const directLight = new THREE.DirectionalLight(0x00fffc, 0.3);
+const helper = new THREE.DirectionalLightHelper(directLight, 5);
+directLight.position.set(1, 0.25, 0)
+// scene.add(directLight);
 
-scene.add(Ambientlight);
-// const light = new THREE.DirectionalLight(0xFFFFFF, 0.5);
-// const helper = new THREE.DirectionalLightHelper(light, 1);
-// scene.add(helper)
-// gui.add(geometry, 'wireframe')
+// const Ambientlight = new THREE.AmbientLight(0xFFFFFF, 0.5); // soft white light
+// gui.add(Ambientlight, 'intensity').min(0).max(1).step(0.001)
+// scene.add(Ambientlight);
+const hemisphereLight = new THREE.HemisphereLight(0x00fffc, 0x0000ff, 0.1)
+scene.add(hemisphereLight)
+
+const pointLight = new THREE.PointLight(0x00fffc, 0.5)
+gui.add(pointLight, 'intensity').min(0).max(1).step(0.001)
+pointLight.castShadow = true
+pointLight.position.x = 1
+pointLight.position.y = 2
+pointLight.position.z = 1
+// scene.add(pointLight)
+const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.2)
+scene.add(pointLightHelper)
+
+
+const spotLight = new THREE.SpotLight(0x78ff00, 0.5, 8, Math.PI * 0.1, 0.25, 1)
+spotLight.position.set(2, 2, 3)
+spotLight.target.position.x = - 0.75
+scene.add(spotLight)
+
+const spotLightHelper = new THREE.SpotLightHelper(spotLight)
+// scene.add(spotLightHelper)
+window.requestAnimationFrame(() => {
+    spotLightHelper.update()
+})
 // // .min(- 3)
 // //     .max(3)
 // //     .step(0.01)
@@ -66,9 +107,9 @@ window.addEventListener('resize', () => {
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = 1
-camera.position.y = 1
-camera.position.z = 2
+camera.position.x = 3
+camera.position.y = 1.3
+camera.position.z = 4
 scene.add(camera)
 
 // Controls
@@ -88,15 +129,21 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
  * Animate
  */
 const clock = new THREE.Clock()
+// gsap.to(sphere.position, { duration: 1, y: 2 })
 
 const tick = () => {
-    const elapsedTime = clock.getElapsedTime()
+    const elapsedTime = clock.getElapsedTime();
+    const speed = elapsedTime * 2;
+    let angle = 30;
+    angle = (angle) * (Math.PI / 180) * speed;
+    const rotateY = Math.sin(angle) * 2;
+    const rotateX = Math.cos(angle) * 2;
 
+    sphere.position.x = rotateX;
+    sphere.position.z = rotateY;
     // Update controls
     controls.update()
-    sphere.position.y = Math.sin(elapsedTime)
-    sphere1.position.y = Math.sin(elapsedTime) / 2
-    sphere2.position.y = Math.sin(elapsedTime) / 2
+
     // Render
     renderer.render(scene, camera)
 
