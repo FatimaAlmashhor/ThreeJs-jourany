@@ -46,17 +46,16 @@ const cube = new THREE.Mesh(
     new THREE.BoxGeometry(1, 1, 1, 1),
     material
 )
-cube.position.x = 0.9;
 plan.rotation.x = - Math.PI * .5
 // plan.rotation.y = - 0.50;
 plan.position.y = -1.3;
 
-scene.add(plan)
+scene.add(plan, cube)
 
 
 // light
 const directLight = new THREE.DirectionalLight(0x00fffc, 0.3);
-const helper = new THREE.DirectionalLightHelper(directLight, 5);
+// const helper = new THREE.DirectionalLightHelper(directLight, 5);
 directLight.position.set(1, 0.25, 0)
 // scene.add(directLight);
 
@@ -74,19 +73,21 @@ pointLight.position.y = 2
 pointLight.position.z = 1
 // scene.add(pointLight)
 const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.2)
-scene.add(pointLightHelper)
+// scene.add(pointLightHelper)
 
 
 const spotLight = new THREE.SpotLight(0x78ff00, 0.5, 8, Math.PI * 0.1, 0.25, 1)
+const spotLight2 = new THREE.SpotLight(0x00fffc, 1, 8, Math.PI * 0.1, 0.25, 1)
 spotLight.position.set(2, 2, 3)
+spotLight2.position.set(-2, 2, 3)
 spotLight.target.position.x = - 0.75
-scene.add(spotLight)
+scene.add(spotLight, spotLight2)
 
-const spotLightHelper = new THREE.SpotLightHelper(spotLight)
+// const spotLightHelper = new THREE.SpotLightHelper(spotLight)
 // scene.add(spotLightHelper)
-window.requestAnimationFrame(() => {
-    spotLightHelper.update()
-})
+// window.requestAnimationFrame(() => {
+//     spotLightHelper.update()
+// })
 // // .min(- 3)
 // //     .max(3)
 // //     .step(0.01)
@@ -158,6 +159,13 @@ const tick = () => {
         sphere.position.z = rotateY;
         sphere.position.y = Math.sin(speed + (i * 2))
     })
+    const speed = elapsedTime * 2;
+    let angle = 30;
+    angle = (angle) * (Math.PI / 180) * speed;
+    spotLight.position.x = -Math.cos(angle) * 2
+    spotLight2.position.x = Math.cos(angle) * 2
+
+    spotLight.position.z = Math.sin(angle) * 2
     // Update controls
     controls.update()
 
