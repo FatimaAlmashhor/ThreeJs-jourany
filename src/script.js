@@ -16,17 +16,7 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 // object
-const geometry = new THREE.SphereGeometry(0.3, 30, 20);
-const geometry2 = new THREE.SphereGeometry(0.3, 30, 20);
-const geometry3 = new THREE.SphereGeometry(0.3, 30, 20);
-const material = new THREE.MeshBasicMaterial({ color: 0xffffff })
-material.wireframe = true
-const sphere = new THREE.Mesh(geometry, material);
-const sphere1 = new THREE.Mesh(geometry2, material);
-const sphere2 = new THREE.Mesh(geometry3, material);
-sphere1.position.x = -0.9;
-sphere2.position.x = 0.9;
-scene.add(sphere, sphere1, sphere2)
+
 
 // light
 const Ambientlight = new THREE.AmbientLight(0x404040, 0.5); // soft white light
@@ -94,9 +84,6 @@ const tick = () => {
 
     // Update controls
     controls.update()
-    sphere.position.y = Math.sin(elapsedTime)
-    sphere1.position.y = Math.sin(elapsedTime) / 2
-    sphere2.position.y = Math.sin(elapsedTime) / 2
     // Render
     renderer.render(scene, camera)
 
