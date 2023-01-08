@@ -17,26 +17,36 @@ const scene = new THREE.Scene()
 
 // object
 const particlesGeometry = new THREE.BufferGeometry();
-const count = 500;
+const count = 5000;
 
 const positions = new Float32Array(count * 3);
+const rotation = [];
+const colors = new Float32Array(count * 3)
 
 for (let i = 0; i < count * 3; i++) {
     positions[i] = (Math.random() - 0.5) * 10
+    // rotation[i] = (Math.random() - 0.5) * 10
+    colors[i] = Math.random()
 }
 
 particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
 const material = new THREE.PointsMaterial({
     size: 0.02,
     sizeAttenuation: true
 });
 const points = new THREE.Points(particlesGeometry, material)
-material.color = new THREE.Color('#ff88cc');
+// material.color = new THREE.Color('#FFBF00');
 
 const textureLoader = new THREE.TextureLoader()
 const particleTexture = textureLoader.load('./textures/particles/banana-28.png')
 material.map = particleTexture;
-material.size = 0.3
+// material.alphaMap = particleTexture;
+material.alphaTest = 0.001;
+// material.depthTest = false;
+material.size = 0.7
+material.vertexColors = true
+material.transparent = true;
 scene.add(points);
 
 // light
@@ -104,6 +114,15 @@ const tick = () => {
     const elapsedTime = clock.getElapsedTime()
 
     // Update controls
+
+    for (let i = 0; i < count; i++) {
+        const i3 = i * 3
+
+        const x = particlesGeometry.attributes.position.array[i3]
+        particlesGeometry.attributes.position.array[i3 + 1] = Math.sin(elapsedTime + x)
+    }
+    particlesGeometry.attributes.position.needsUpdate = true
+
     controls.update()
     // Render
     renderer.render(scene, camera)
