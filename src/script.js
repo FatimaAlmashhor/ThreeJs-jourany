@@ -31,9 +31,13 @@ const material = new THREE.PointsMaterial({
     sizeAttenuation: true
 });
 const points = new THREE.Points(particlesGeometry, material)
-material.color = new THREE.Color('#ff88cc')
-scene.add(points);
+material.color = new THREE.Color('#ff88cc');
 
+const textureLoader = new THREE.TextureLoader()
+const particleTexture = textureLoader.load('./textures/particles/banana-28.png')
+material.map = particleTexture;
+material.size = 0.3
+scene.add(points);
 
 // light
 const Ambientlight = new THREE.AmbientLight(0x404040, 0.5); // soft white light
