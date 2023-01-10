@@ -16,34 +16,71 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
+/**
+ * Physics
+ */
+const world = new CANNON.World()
+world.gravity.set(0, - 9.82, 0)
+
 // material 
-const material = new THREE.MeshMatcapMaterial();
+const material = new THREE.MeshStandardMaterial({
+    color: '#777777',
+    metalness: 0.3,
+    roughness: 0.4,
+    // envMap: environmentMapTexture,
+    // envMapIntensity: 0.5
+});
 // object
 const plan = new THREE.Mesh(
     new THREE.PlaneGeometry(3, 3, 1, 1),
     material
 )
 plan.rotation.x = - Math.PI * 0.5
-plan.position.y = - 0.3
+// plan.position.y = - 0.5
+plan.receiveShadow = true
+
+// physics world 
+const floorShape = new CANNON.Plane()
+const floorBody = new CANNON.Body()
+floorBody.mass = 0
+floorBody.addShape(floorShape)
+floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5)
+world.addBody(floorBody)
+
 // shpere
 const sphere = new THREE.Mesh(
     new THREE.SphereGeometry(0.2, 20, 20),
     material
 )
-
+sphere.castShadow = true
+// sphere.position.y = 0.2
+// physics world
+const sphereShape = new CANNON.Sphere(0.2)
+const sphereBody = new CANNON.Body({
+    mass: 1,
+    position: new CANNON.Vec3(0, 3, 0),
+    shape: sphereShape
+})
+world.addBody(sphereBody)
 scene.add(plan, sphere)
 
 // light
-const Ambientlight = new THREE.AmbientLight(0x404040, 0.5); // soft white light
+const Ambientlight = new THREE.AmbientLight(0xffffff, 0.7); // soft white light
 
 scene.add(Ambientlight);
-// const light = new THREE.DirectionalLight(0xFFFFFF, 0.5);
-// const helper = new THREE.DirectionalLightHelper(light, 1);
-// scene.add(helper)
-// gui.add(geometry, 'wireframe')
-// // .min(- 3)
-// //     .max(3)
-// //     .step(0.01)
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
+directionalLight.castShadow = true
+directionalLight.shadow.mapSize.set(1024, 1024)
+directionalLight.shadow.camera.far = 10
+directionalLight.shadow.camera.left = - 4
+directionalLight.shadow.camera.top = 4
+directionalLight.shadow.camera.right = 4
+directionalLight.shadow.camera.bottom = - 4
+directionalLight.position.set(2, 2, 2)
+gui.add(directionalLight, 'intensity').min(-5).max(5)
+const helper = new THREE.DirectionalLightHelper(directionalLight)
+scene.add(directionalLight)
+scene.add(helper)
 /**
  * Sizes
  */
@@ -93,10 +130,18 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
  * Animate
  */
 const clock = new THREE.Clock()
-
+let oldElapsedTime = 0
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
+    const deltaTime = elapsedTime - oldElapsedTime
+    oldElapsedTime = elapsedTime
 
+    // Update physics
+    world.step(1 / 60, deltaTime, 3)
+    // sphere.position.x = sphereBody.position.x
+    // sphere.position.y = sphereBody.position.y
+    // sphere.position.z = sphereBody.position.z
+    sphere.position.copy(sphereBody.position)
     // Update controls
     controls.update()
     // Render
