@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
 import gsap from 'gsap'
+import CANNON from 'cannon'
 /**
  * Base
  */
@@ -15,8 +16,22 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
+// material 
+const material = new THREE.MeshMatcapMaterial();
 // object
+const plan = new THREE.Mesh(
+    new THREE.PlaneGeometry(3, 3, 1, 1),
+    material
+)
+plan.rotation.x = - Math.PI * 0.5
+plan.position.y = - 0.3
+// shpere
+const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(0.2, 20, 20),
+    material
+)
 
+scene.add(plan, sphere)
 
 // light
 const Ambientlight = new THREE.AmbientLight(0x404040, 0.5); // soft white light
