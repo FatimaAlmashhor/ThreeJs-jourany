@@ -30,6 +30,23 @@ const material = new THREE.MeshStandardMaterial({
     // envMap: environmentMapTexture,
     // envMapIntensity: 0.5
 });
+
+// physics naterial 
+// const concreteMaterial = new CANNON.Material('concrete')
+// const plasticMaterial = new CANNON.Material('plastic')
+const defaultMaterial = new CANNON.Material('default')
+
+const concretePlasticContactMaterial = new CANNON.ContactMaterial(
+    // concreteMaterial,
+    // plasticMaterial,
+    defaultMaterial,
+    defaultMaterial,
+    {
+        friction: 0.1,
+        restitution: 0.7
+    }
+)
+world.addContactMaterial(concretePlasticContactMaterial)
 // object
 const plan = new THREE.Mesh(
     new THREE.PlaneGeometry(3, 3, 1, 1),
@@ -44,6 +61,7 @@ const floorShape = new CANNON.Plane()
 const floorBody = new CANNON.Body()
 floorBody.mass = 0
 floorBody.addShape(floorShape)
+floorBody.material = defaultMaterial
 floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5)
 world.addBody(floorBody)
 
@@ -59,10 +77,18 @@ const sphereShape = new CANNON.Sphere(0.2)
 const sphereBody = new CANNON.Body({
     mass: 1,
     position: new CANNON.Vec3(0, 3, 0),
-    shape: sphereShape
+    shape: sphereShape,
+    material: defaultMaterial
+
 })
+sphereBody.applyLocalForce(new CANNON.Vec3(60, 0, 0), new CANNON.Vec3(0, 0, 0))
 world.addBody(sphereBody)
+
+
 scene.add(plan, sphere)
+
+
+
 
 // light
 const Ambientlight = new THREE.AmbientLight(0xffffff, 0.7); // soft white light
@@ -137,6 +163,8 @@ const tick = () => {
     oldElapsedTime = elapsedTime
 
     // Update physics
+    sphereBody.applyForce(new CANNON.Vec3(- 0.5, 0, 0), sphereBody.position)
+
     world.step(1 / 60, deltaTime, 3)
     // sphere.position.x = sphereBody.position.x
     // sphere.position.y = sphereBody.position.y
