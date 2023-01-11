@@ -4,6 +4,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
 import gsap from 'gsap'
 import CANNON from 'cannon'
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 /**
  * Base
  */
@@ -12,7 +14,8 @@ const gui = new dat.GUI()
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
-
+// texts 
+const text = document.querySelectorAll('.text p')
 // Scene
 const scene = new THREE.Scene()
 
@@ -31,6 +34,8 @@ const material = new THREE.MeshStandardMaterial({
     // envMapIntensity: 0.5
 });
 
+
+
 // physics naterial 
 // const concreteMaterial = new CANNON.Material('concrete')
 // const plasticMaterial = new CANNON.Material('plastic')
@@ -46,12 +51,58 @@ const concretePlasticContactMaterial = new CANNON.ContactMaterial(
         restitution: 0.7
     }
 )
+
+
+// Text 
+const fontLoader = new FontLoader()
+const textureLoader = new THREE.TextureLoader();
+const matcapTexture = textureLoader.load('/textures/matcaps/8.png')
+const coloringMaterial = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
+// Font 
+const create3DText = (font) => {
+    text.forEach((item, index) => {
+        const textGeometry = new TextGeometry(
+            item.textContent,
+            {
+                font: font,
+                size: 0.34,
+                height: 0.2,
+                curveSegments: 5,
+                bevelEnabled: true,
+                bevelThickness: 0.03,
+                bevelSize: 0.03,
+                bevelOffset: 0,
+                bevelSegments: 1
+            }
+        )
+        const text = new THREE.Mesh(textGeometry, coloringMaterial)
+        textGeometry.center();
+        textGeometry.translate(0, -(-index * -0.3) + 0.5, 0)
+        textGeometry.computeBoundingBox()
+        textGeometry.size = textGeometry.boundingBox.getSize(new THREE.Vector3());
+
+        scene.add(text)
+
+        // cannon
+        const box = new CANNON.Body({
+            mass: 0,
+            shape: new CANNON.Box(new CANNON.Vec3().copy(textGeometry.size).scale(0.18)),
+            position: new CANNON.Vec3(0, index, 0),
+            material: defaultMaterial
+        });
+        world.addBody(box);
+    })
+
+}
+fontLoader.load(
+    '/fonts/helvetiker_regular.typeface.json',
+    create3DText
+)
 world.addContactMaterial(concretePlasticContactMaterial)
 // object
 const plan = new THREE.Mesh(
     new THREE.PlaneGeometry(3, 3, 1, 1),
-    material
-)
+    coloringMaterial)
 plan.rotation.x = - Math.PI * 0.5
 // plan.position.y = - 0.5
 plan.receiveShadow = true
@@ -68,7 +119,7 @@ world.addBody(floorBody)
 // shpere
 const sphere = new THREE.Mesh(
     new THREE.SphereGeometry(0.2, 20, 20),
-    material
+    coloringMaterial
 )
 sphere.castShadow = true
 // sphere.position.y = 0.2
