@@ -11,7 +11,7 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
  */
 // Debug
 const gui = new dat.GUI()
-
+const debugObject = {}
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 // texts 
@@ -76,20 +76,21 @@ const create3DText = (font) => {
             }
         )
         const text = new THREE.Mesh(textGeometry, coloringMaterial)
+        const hight = -(-index * -0.3) + 0.5;
         textGeometry.center();
-        textGeometry.translate(0, -(-index * -0.3) + 0.5, 0)
+        textGeometry.translate(0, hight, 0)
         textGeometry.computeBoundingBox()
         textGeometry.size = textGeometry.boundingBox.getSize(new THREE.Vector3());
-
         scene.add(text)
 
         // cannon
         const box = new CANNON.Body({
             mass: 0,
-            shape: new CANNON.Box(new CANNON.Vec3().copy(textGeometry.size).scale(0.18)),
-            position: new CANNON.Vec3(0, index, 0),
+            shape: new CANNON.Box(new CANNON.Vec3().copy(textGeometry.size)),
+            position: new CANNON.Vec3(0, hight - 0.2, 0),
             material: defaultMaterial
         });
+        // text.position.copy(box.position)
         world.addBody(box);
     })
 
@@ -106,7 +107,7 @@ const plan = new THREE.Mesh(
 plan.rotation.x = - Math.PI * 0.5
 // plan.position.y = - 0.5
 plan.receiveShadow = true
-
+scene.add(plan)
 // physics world 
 const floorShape = new CANNON.Plane()
 const floorBody = new CANNON.Body()
@@ -116,28 +117,47 @@ floorBody.material = defaultMaterial
 floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5)
 world.addBody(floorBody)
 
-// shpere
-const sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(0.2, 20, 20),
-    coloringMaterial
-)
-sphere.castShadow = true
-// sphere.position.y = 0.2
-// physics world
-const sphereShape = new CANNON.Sphere(0.2)
-const sphereBody = new CANNON.Body({
-    mass: 1,
-    position: new CANNON.Vec3(0, 3, 0),
-    shape: sphereShape,
-    material: defaultMaterial
+/**
+ * Utils
+ */
+const objectsToUpdate = []
+const createSphere = (radius, position) => {
+    // shpere
+    const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(radius, 20, 20),
+        coloringMaterial
+    )
+    sphere.castShadow = true
+    sphere.position.copy(position)
+    scene.add(sphere)
+    // sphere.position.y = 0.2
+    // physics world
+    const sphereShape = new CANNON.Sphere(radius)
+    const sphereBody = new CANNON.Body({
+        mass: 1,
+        position: new CANNON.Vec3(0, 3, 0),
+        shape: sphereShape,
+        material: defaultMaterial
 
-})
-sphereBody.applyLocalForce(new CANNON.Vec3(60, 0, 0), new CANNON.Vec3(0, 0, 0))
-world.addBody(sphereBody)
+    })
+    sphereBody.position.copy(position)
+    // sphereBody.applyLocalForce(new CANNON.Vec3(60, 0, 0), new CANNON.Vec3(0, 0, 0))
+    world.addBody(sphereBody)
+
+    // Save in objects to update
+    objectsToUpdate.push({
+        mesh: sphere,
+        body: sphereBody
+    })
+
+}
 
 
-scene.add(plan, sphere)
+debugObject.createSphere = () => {
+    createSphere(0.5, { x: 0, y: 3, z: 0 })
+}
 
+gui.add(debugObject, 'createSphere')
 
 
 
@@ -214,13 +234,16 @@ const tick = () => {
     oldElapsedTime = elapsedTime
 
     // Update physics
-    sphereBody.applyForce(new CANNON.Vec3(- 0.5, 0, 0), sphereBody.position)
+    // sphereBody.applyForce(new CANNON.Vec3(- 0, 0, 0.1), sphereBody.position)
 
     world.step(1 / 60, deltaTime, 3)
-    // sphere.position.x = sphereBody.position.x
+    // sphegure.position.x = sphereBody.position.x
     // sphere.position.y = sphereBody.position.y
     // sphere.position.z = sphereBody.position.z
-    sphere.position.copy(sphereBody.position)
+    // sphere.position.copy(sphereBody.position)
+    for (const object of objectsToUpdate) {
+        object.mesh.position.copy(object.body.position)
+    }
     // Update controls
     controls.update()
     // Render
