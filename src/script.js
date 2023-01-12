@@ -18,12 +18,14 @@ const canvas = document.querySelector('canvas.webgl')
 const text = document.querySelectorAll('.text p')
 // Scene
 const scene = new THREE.Scene()
+scene.background = new THREE.Color('#fff')
 
 /**
  * Physics
  */
 const world = new CANNON.World()
 world.gravity.set(0, - 9.82, 0)
+world.allowSleep = true
 
 // material 
 const material = new THREE.MeshStandardMaterial({
@@ -59,6 +61,8 @@ const textureLoader = new THREE.TextureLoader();
 const matcapTexture = textureLoader.load('/textures/matcaps/8.png')
 const coloringMaterial = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
 // Font 
+
+const textArr = [];
 const create3DText = (font) => {
     text.forEach((item, index) => {
         const textGeometry = new TextGeometry(
@@ -78,18 +82,22 @@ const create3DText = (font) => {
         const text = new THREE.Mesh(textGeometry, coloringMaterial)
         const hight = -(-index * -0.3) + 0.5;
         textGeometry.center();
-        textGeometry.translate(0, hight, 0)
+        // textGeometry.translate(0, 0, 0)
         textGeometry.computeBoundingBox()
         textGeometry.size = textGeometry.boundingBox.getSize(new THREE.Vector3());
         scene.add(text)
 
         // cannon
         const box = new CANNON.Body({
-            mass: 0,
-            shape: new CANNON.Box(new CANNON.Vec3().copy(textGeometry.size)),
-            position: new CANNON.Vec3(0, hight - 0.2, 0),
+            mass: 1,
+            shape: new CANNON.Box(new CANNON.Vec3().copy(textGeometry.size).scale(0.8)),
+            position: new CANNON.Vec3(index, 3 - index, 0),
             material: defaultMaterial
         });
+        textArr.push({
+            mesh: text,
+            body: box
+        })
         // text.position.copy(box.position)
         world.addBody(box);
     })
@@ -102,7 +110,7 @@ fontLoader.load(
 world.addContactMaterial(concretePlasticContactMaterial)
 // object
 const plan = new THREE.Mesh(
-    new THREE.PlaneGeometry(3, 3, 1, 1),
+    new THREE.PlaneGeometry(12, 12, 3, 7),
     coloringMaterial)
 plan.rotation.x = - Math.PI * 0.5
 // plan.position.y = - 0.5
@@ -116,6 +124,21 @@ floorBody.addShape(floorShape)
 floorBody.material = defaultMaterial
 floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5)
 world.addBody(floorBody)
+/**
+ * Sounds
+ */
+const hitSound = new Audio('/sounds/hit.mp3')
+
+const playHitSound = (collision) => {
+    const impactStrength = collision.contact.getImpactVelocityAlongNormal()
+
+    if (impactStrength > 1.5) {
+        hitSound.volume = Math.random()
+        hitSound.currentTime = 0
+        hitSound.play()
+    }
+
+}
 
 /**
  * Utils
@@ -143,6 +166,7 @@ const createSphere = (radius, position) => {
     sphereBody.position.copy(position)
     // sphereBody.applyLocalForce(new CANNON.Vec3(60, 0, 0), new CANNON.Vec3(0, 0, 0))
     world.addBody(sphereBody)
+    sphereBody.addEventListener('collide', playHitSound)
 
     // Save in objects to update
     objectsToUpdate.push({
@@ -154,11 +178,28 @@ const createSphere = (radius, position) => {
 
 
 debugObject.createSphere = () => {
-    createSphere(0.5, { x: 0, y: 3, z: 0 })
+    createSphere(
+        Math.random() * 0.5,
+        {
+            x: (Math.random() - 0.5) * 3,
+            y: 3,
+            z: (Math.random() - 0.5) * 3
+        }
+    )
 }
+debugObject.reset = () => {
+    for (const object of objectsToUpdate) {
+        // Remove body
+        object.body.removeEventListener('collide', playHitSound)
+        world.removeBody(object.body)
 
+        // Remove mesh
+        scene.remove(object.mesh)
+        objectsToUpdate.splice(0, objectsToUpdate.length)
+
+    }
+}
 gui.add(debugObject, 'createSphere')
-
 
 
 // light
@@ -242,6 +283,9 @@ const tick = () => {
     // sphere.position.z = sphereBody.position.z
     // sphere.position.copy(sphereBody.position)
     for (const object of objectsToUpdate) {
+        object.mesh.position.copy(object.body.position)
+    }
+    for (const object of textArr) {
         object.mesh.position.copy(object.body.position)
     }
     // Update controls
