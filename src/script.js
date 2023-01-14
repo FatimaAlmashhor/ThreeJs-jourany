@@ -5,7 +5,7 @@ import gsap from 'gsap'
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Color } from 'three';
-
+gsap.registerPlugin(ScrollTrigger)
 // Texture
 const textureLoader = new THREE.TextureLoader()
 const gradientTexture = textureLoader.load('textures/gradients/3.jpg')
@@ -67,7 +67,7 @@ const sizes = {
 // scene.add(mesh1)
 
 const plan = new THREE.Mesh(
-    new THREE.PlaneGeometry(8, 8, 20, 60),
+    new THREE.PlaneGeometry(10, 10, 20, 60),
     material
 )
 plan.position.z = -1
@@ -187,7 +187,7 @@ const loadingMasger = new THREE.LoadingManager(() => {
 
 const gltfLoader = new GLTFLoader(loadingMasger)
 gltfLoader.load(model.url, (model) => {
-    console.log('here');
+
     // shadows
     model.scene.traverse((child) => {
         if (child instanceof THREE.Mesh) {
@@ -203,7 +203,32 @@ gltfLoader.load(model.url, (model) => {
     scene.add(modelGroup)
 })
 const setupAnimation = () => {
+    console.log('here');
+    let section = 0;
+    const tl = gsap.timeline({
+        default: {
+            duration: 1,
+            ease: "power2.inOut"
+        },
+        scrollTrigger: {
+            trigger: ".page",
+            start: "top top",
+            end: "bottom bottom",
+            scrub: 0.1,
+            markers: true
+        }
+    })
 
+    // section1
+    tl.to(modelGroup.rotation, { y: Math.PI * 0.2 }, section);
+    tl.to(modelGroup.position, { x: -1.5 }, section);
+
+    section++
+
+    tl.to(modelGroup.position, { y: - 1 }, section);
+    tl.to(modelGroup.rotation, { y: Math.PI * 0 }, section);
+    tl.to(modelGroup.position, { x: 0 }, section);
+    tl.to(modelGroup.scale, { x: 1.4, y: 1.4, z: 1.4 }, section);
 }
 
 
