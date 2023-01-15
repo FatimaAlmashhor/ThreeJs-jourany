@@ -25,7 +25,7 @@ const COLORS = {
     blue: "steelblue"
 };
 const parameters = {
-    materialColor: '#1b0a43'
+    materialColor: '#005ca3'
 }
 // Material
 const material = new THREE.MeshToonMaterial({
@@ -97,12 +97,13 @@ scenes.real.add(plan)
  * Lights
  */
 const directionalLight = new THREE.DirectionalLight('#ffffff', 2)
-directionalLight.position.set(1, 1, 0)
+// directionalLight.position.set(1, 1, 0)
 directionalLight.castShadow = true;
 directionalLight.shadow.camera.far = 10;
 directionalLight.shadow.mapSize.set(1024, 1024);
 directionalLight.shadow.normalBias = 0.05;
-// directionalLight.position.set(2, 5, 3);
+directionalLight.position.set(2, 0, 3);
+
 scenes.real.add(directionalLight)
 
 const hemisphereLight = new THREE.HemisphereLight(
@@ -262,6 +263,7 @@ const setupAnimation = () => {
 
 
 const desktopAnimation = () => {
+
     let section = 0;
     const tl = gsap.timeline({
         default: {
@@ -276,12 +278,15 @@ const desktopAnimation = () => {
             markers: true
         }
     })
-
     // section1
     tl.to(bears.rotation, { y: Math.PI * 0.2 }, section);
     tl.to(bears.position, { x: -1.5 }, section);
-    tl.to(plan.position, { y: -7.5 }, section);
+    tl.to(plan.position, { y: -10.5 }, section);
 
+    section++
+    section++
+
+    tl.to(views[1], { height: 1, ease: 'none' }, section)
     section++
 
     tl.to(bears.position, { y: - 1 }, section);
@@ -289,14 +294,16 @@ const desktopAnimation = () => {
     tl.to(bears.position, { x: 0 }, section);
     tl.to(modelGroup.scale, { x: 1.4, y: 1.4, z: 1.4 }, section);
     tl.to(cloneGroup.scale, { x: 1.4, y: 1.4, z: 1.4 }, section);
-    tl.to(plan.position, { y: 7.5 }, section);
-    section++
+    tl.to(plan.position, { y: 2.5 }, section);
 
-    tl.to(bears.position, { y: - 1 }, section);
-    tl.to(bears.rotation, { y: Math.PI * 0 }, section);
-    tl.to(bears.position, { x: 0 }, section);
-    tl.to(modelGroup.scale, { x: 1.4, y: 1.4, z: 1.4 }, section);
-    tl.to(cloneGroup.scale, { x: 1.4, y: 1.4, z: 1.4 }, section);
+
+    // section++
+    // tl.to(bears.position, { y: - 1 }, section);
+    // tl.to(bears.rotation, { y: Math.PI * 0 }, section);
+    // tl.to(bears.position, { x: 0 }, section);
+    // tl.to(modelGroup.scale, { x: 1.4, y: 1.4, z: 1.4 }, section);
+    // tl.to(cloneGroup.scale, { x: 1.4, y: 1.4, z: 1.4 }, section);
+
 
     // tl.to(plan.position, { y: 10.5 }, section);
 }

@@ -43,3 +43,7 @@ body {
 section:nth-child(even) {
     justify-content: flex-end;
 }
+
+section:nth-last-child() {
+    color: #1e1a20;
+}
