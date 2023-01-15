@@ -17,7 +17,7 @@ const gui = new dat.GUI()
 // --- CONSTS
 
 const COLORS = {
-    background: "white",
+    background: "#5e62d9",
     light: "#ffffff",
     black: "#e1e1e1",
     sky: "#aaaaff",
@@ -32,6 +32,7 @@ const material = new THREE.MeshToonMaterial({
     color: parameters.materialColor,
     gradientMap: gradientTexture
 })
+const wireframeMaterial = new THREE.MeshBasicMaterial({ color: 'white', wireframe: true })
 gui
     .addColor(parameters, 'materialColor')
     .onChange(() => {
@@ -45,8 +46,19 @@ gui
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
-const scene = new THREE.Scene()
-scene.background = new THREE.Color('#5e62d9')
+const scenes = {
+    real: new THREE.Scene(),
+    wire: new THREE.Scene()
+};
+
+scenes.wire.overrideMaterial = wireframeMaterial
+scenes.wire.background = new THREE.Color(COLORS.black);
+
+scenes.real.background = new THREE.Color(COLORS.background);
+scenes.real.fog = new THREE.Fog(COLORS.background, 15, 20);
+
+// const scene = new THREE.Scene()
+// scene.background = new THREE.Color('#5e62d9')
 
 /**
  * Sizes
@@ -56,6 +68,11 @@ const sizes = {
     height: window.innerHeight
 }
 
+// View 
+const views = [
+    { height: 1, bottom: 0, scene: scenes.real, camera: null },
+    { height: 0, bottom: 0, scene: scenes.wire, camera: null }
+];
 /**
  * Test cube
  */
@@ -72,7 +89,8 @@ const plan = new THREE.Mesh(
 )
 plan.position.z = -1
 plan.receiveShadow = true;
-scene.add(plan)
+// scenes.real.add(plan)
+scenes.real.add(plan)
 
 
 /**
@@ -85,14 +103,14 @@ directionalLight.shadow.camera.far = 10;
 directionalLight.shadow.mapSize.set(1024, 1024);
 directionalLight.shadow.normalBias = 0.05;
 // directionalLight.position.set(2, 5, 3);
-scene.add(directionalLight)
+scenes.real.add(directionalLight)
 
 const hemisphereLight = new THREE.HemisphereLight(
     COLORS.light,
     COLORS.black,
     2
 );
-scene.add(hemisphereLight)
+scenes.real.add(hemisphereLight)
 
 
 window.addEventListener('resize', () => {
@@ -103,9 +121,9 @@ window.addEventListener('resize', () => {
     // Update camera
     camera.aspect = sizes.width / sizes.height
     camera.updateProjectionMatrix()
-
-    // Update renderer
-    renderer.setSize(sizes.width, sizes.height)
+    renderer
+        // Update renderer
+        .setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
@@ -113,12 +131,25 @@ window.addEventListener('resize', () => {
  * Camera
  */
 
-const cameraGroup = new THREE.Group()
-scene.add(cameraGroup)
+
+
 // Base camera
-const camera = new THREE.PerspectiveCamera(35, sizes.width / sizes.height, 0.1, 100)
-camera.position.z = 6
-cameraGroup.add(camera)
+// const camera = new THREE.PerspectiveCamera(35, sizes.width / sizes.height, 0.1, 100)
+// camera.position.z = 6
+let cameraTarget = new THREE.Vector3(0, 0, 6)
+
+// two cameras to the views 
+views.forEach(view => {
+    view.camera = new THREE.PerspectiveCamera(
+        35,
+        sizes.width / sizes.height,
+        0.1,
+        100
+    );
+    view.camera.position.set(0, 0, 6);
+
+    view.scene.add(view.camera);
+})
 
 /**
  * Renderer
@@ -160,9 +191,16 @@ const clock = new THREE.Clock()
 
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
-
+    views.forEach(view => {
+        view.camera.lookAt(cameraTarget);
+        let bottom = sizes.height * view.bottom
+        let height = sizes.height * view.height
+        renderer.setViewport(0, 0, sizes.width, sizes.height)
+        renderer.setScissor(0, bottom, sizes.width, height)
+        renderer.setScissorTest(true)
+        renderer.render(view.scene, view.camera);
+    })
     // Render
-    renderer.render(scene, camera)
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
@@ -177,8 +215,10 @@ const model = {
     url: 'https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/bear/model.gltf',
     position: new THREE.Vector3(0, - 0.5, 0)
 }
-let modelGroup = new THREE.Group();
 
+let modelGroup = new THREE.Group();
+let cloneGroup = null;
+let bears = {};
 // loading
 
 const loadingMasger = new THREE.LoadingManager(() => {
@@ -196,14 +236,32 @@ gltfLoader.load(model.url, (model) => {
         }
     })
     modelGroup.add(model.scene)
-    modelGroup.position.y = -3.3
-    modelGroup.position.x = 1.3
+    cloneGroup = modelGroup.clone();
+    // modelGroup.position.y = -3.3
+    // modelGroup.position.x = 1.3
     modelGroup.scale.set(2.7, 2.7, 2.7)
-    modelGroup.rotation.y = - Math.PI * 0.2
-    scene.add(modelGroup)
+    cloneGroup.scale.set(2.7, 2.7, 2.7)
+    // modelGroup.rotation.y = - Math.PI * 0.2
+    scenes.real.add(modelGroup)
+    scenes.wire.add(cloneGroup)
 })
 const setupAnimation = () => {
+    bears = {
+        position: [modelGroup.position, cloneGroup.position],
+        rotation: [modelGroup.rotation, cloneGroup.rotation],
+    };
+
+    gsap.set(bears.position, { x: 1.4, y: -2.6 })
+    // gsap.set(bears.scale, { x: 1.4, y: 1.4, z: 1.4 })
+    gsap.set(bears.rotation, { y: - Math.PI * 0.2 })
+    desktopAnimation()
     console.log('here');
+
+}
+
+
+
+const desktopAnimation = () => {
     let section = 0;
     const tl = gsap.timeline({
         default: {
@@ -220,16 +278,25 @@ const setupAnimation = () => {
     })
 
     // section1
-    tl.to(modelGroup.rotation, { y: Math.PI * 0.2 }, section);
-    tl.to(modelGroup.position, { x: -1.5 }, section);
+    tl.to(bears.rotation, { y: Math.PI * 0.2 }, section);
+    tl.to(bears.position, { x: -1.5 }, section);
+    tl.to(plan.position, { y: -7.5 }, section);
 
     section++
 
-    tl.to(modelGroup.position, { y: - 1 }, section);
-    tl.to(modelGroup.rotation, { y: Math.PI * 0 }, section);
-    tl.to(modelGroup.position, { x: 0 }, section);
+    tl.to(bears.position, { y: - 1 }, section);
+    tl.to(bears.rotation, { y: Math.PI * 0 }, section);
+    tl.to(bears.position, { x: 0 }, section);
     tl.to(modelGroup.scale, { x: 1.4, y: 1.4, z: 1.4 }, section);
+    tl.to(cloneGroup.scale, { x: 1.4, y: 1.4, z: 1.4 }, section);
+    tl.to(plan.position, { y: 7.5 }, section);
+    section++
+
+    tl.to(bears.position, { y: - 1 }, section);
+    tl.to(bears.rotation, { y: Math.PI * 0 }, section);
+    tl.to(bears.position, { x: 0 }, section);
+    tl.to(modelGroup.scale, { x: 1.4, y: 1.4, z: 1.4 }, section);
+    tl.to(cloneGroup.scale, { x: 1.4, y: 1.4, z: 1.4 }, section);
+
+    // tl.to(plan.position, { y: 10.5 }, section);
 }
-
-
-
