@@ -44,6 +44,10 @@ section:nth-child(even) {
     justify-content: flex-end;
 }
 
-section:nth-last-child() {
-    color: #1e1a20;
+section:nth-child(3) {
+    color: #2d292e;
+}
+
+section:nth-child(4) {
+    color: #2d292e;
 }
